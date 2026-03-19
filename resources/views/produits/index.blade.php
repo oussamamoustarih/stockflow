@@ -98,11 +98,10 @@
                             <i class="bi bi-pencil"></i>
                         </a>
                         <form action="{{ route('produits.destroy', $produit) }}"
-                              method="POST" class="d-inline"
-                              onsubmit="return confirm('Supprimer ce produit ?')">
+                              method="POST" class="d-inline confirm-form">
                             @csrf
                             @method('DELETE')
-                            <button class="btn btn-sm btn-danger">
+                            <button type="button" class="btn btn-sm btn-danger btn-confirm btn-delete">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>

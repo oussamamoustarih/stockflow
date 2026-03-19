@@ -53,18 +53,16 @@
                 <div class="d-grid gap-2 mt-2">
                     @if($commande->statut == 'en_attente')
                         <form action="{{ route('commandes.valider', $commande) }}"
-                              method="POST"
-                              onsubmit="return confirm('Valider cette commande ?')">
+                              method="POST" class="confirm-form">
                             @csrf
-                            <button class="btn btn-primary btn-sm w-100">
+                            <button type="button" class="btn btn-primary btn-sm w-100 btn-confirm btn-valider">
                                 <i class="bi bi-check-lg"></i> Valider la commande
                             </button>
                         </form>
                         <form action="{{ route('commandes.annuler', $commande) }}"
-                              method="POST"
-                              onsubmit="return confirm('Annuler cette commande ?')">
+                              method="POST" class="confirm-form">
                             @csrf
-                            <button class="btn btn-danger btn-sm w-100">
+                            <button type="button" class="btn btn-danger btn-sm w-100 btn-confirm btn-annuler">
                                 <i class="bi bi-x-lg"></i> Annuler la commande
                             </button>
                         </form>
@@ -72,18 +70,16 @@
 
                     @if($commande->statut == 'validee')
                         <form action="{{ route('commandes.livrer', $commande) }}"
-                              method="POST"
-                              onsubmit="return confirm('Confirmer la livraison ?')">
+                              method="POST" class="confirm-form">
                             @csrf
-                            <button class="btn btn-success btn-sm w-100">
+                            <button type="button" class="btn btn-success btn-sm w-100 btn-confirm btn-livrer">
                                 <i class="bi bi-truck"></i> Confirmer la livraison
                             </button>
                         </form>
                         <form action="{{ route('commandes.annuler', $commande) }}"
-                              method="POST"
-                              onsubmit="return confirm('Annuler cette commande ?')">
+                              method="POST" class="confirm-form">
                             @csrf
-                            <button class="btn btn-danger btn-sm w-100">
+                            <button type="button" class="btn btn-danger btn-sm w-100 btn-confirm btn-annuler">
                                 <i class="bi bi-x-lg"></i> Annuler la commande
                             </button>
                         </form>

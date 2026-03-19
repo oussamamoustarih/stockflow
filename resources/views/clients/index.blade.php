@@ -40,11 +40,10 @@
                             <i class="bi bi-pencil"></i>
                         </a>
                         <form action="{{ route('clients.destroy', $client) }}"
-                              method="POST" class="d-inline"
-                              onsubmit="return confirm('Supprimer ce client ?')">
+                              method="POST" class="d-inline confirm-form">
                             @csrf
                             @method('DELETE')
-                            <button class="btn btn-sm btn-danger">
+                            <button type="button" class="btn btn-sm btn-danger btn-confirm btn-delete">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>

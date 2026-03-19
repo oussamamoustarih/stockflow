@@ -49,29 +49,26 @@
                         </a>
                         @if($commande->statut == 'en_attente')
                             <form action="{{ route('commandes.valider', $commande) }}"
-                                  method="POST" class="d-inline"
-                                  onsubmit="return confirm('Valider cette commande ?')">
+                                  method="POST" class="d-inline confirm-form">
                                 @csrf
-                                <button class="btn btn-sm btn-primary">
+                                <button type="button" class="btn btn-sm btn-primary btn-confirm btn-valider">
                                     <i class="bi bi-check-lg"></i>
                                 </button>
                             </form>
                             <form action="{{ route('commandes.destroy', $commande) }}"
-                                  method="POST" class="d-inline"
-                                  onsubmit="return confirm('Supprimer cette commande ?')">
+                                  method="POST" class="d-inline confirm-form">
                                 @csrf
                                 @method('DELETE')
-                                <button class="btn btn-sm btn-danger">
+                                <button type="button" class="btn btn-sm btn-danger btn-confirm btn-delete">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
                         @endif
                         @if($commande->statut == 'validee')
                             <form action="{{ route('commandes.livrer', $commande) }}"
-                                  method="POST" class="d-inline"
-                                  onsubmit="return confirm('Confirmer la livraison ?')">
+                                  method="POST" class="d-inline confirm-form">
                                 @csrf
-                                <button class="btn btn-sm btn-success">
+                                <button type="button" class="btn btn-sm btn-success btn-confirm btn-livrer">
                                     <i class="bi bi-truck"></i>
                                 </button>
                             </form>

@@ -53,11 +53,10 @@
                                 </button>
                             </form>
                             <form action="{{ route('approvisionnements.destroy', $appro) }}"
-                                  method="POST" class="d-inline"
-                                  onsubmit="return confirm('Supprimer cet approvisionnement ?')">
+                                  method="POST" class="d-inline confirm-form">
                                 @csrf
                                 @method('DELETE')
-                                <button class="btn btn-sm btn-danger">
+                                <button type="button" class="btn btn-sm btn-danger btn-confirm btn-delete">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>

@@ -53,11 +53,10 @@
                         </a>
                         @if($user->id !== auth()->id())
                         <form action="{{ route('users.destroy', $user) }}"
-                              method="POST" class="d-inline"
-                              onsubmit="return confirm('Supprimer cet utilisateur ?')">
+                              method="POST" class="d-inline confirm-form">
                             @csrf
                             @method('DELETE')
-                            <button class="btn btn-sm btn-danger">
+                            <button type="button" class="btn btn-sm btn-danger btn-confirm btn-delete">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>

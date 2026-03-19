@@ -10,6 +10,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- SweetAlert2 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <link rel="icon" href="/assets/img/logo.svg" type="image/svg+xml">
 
     <style>
@@ -196,27 +198,99 @@
 
         {{-- Messages flash --}}
         @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="bi bi-check-circle"></i> {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'success',
+                    title: {!! json_encode(session('success')) !!},
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    toast: true,
+                });
+            });
+        </script>
         @endif
 
         @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="bi bi-exclamation-circle"></i> {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: {!! json_encode(session('error')) !!},
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    toast: true,
+                });
+            });
+        </script>
         @endif
 
         @yield('content')
     </div>
 </div>
 
+<!-- SweetAlert2 JS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
 <!-- Bootstrap JS CDN -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Alpine.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+<script>
+// SweetAlert2 - Global confirmation handler
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-confirm').forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const form = this.closest('.confirm-form');
+
+            let title = 'Confirmer l\'action';
+            let text = 'Êtes-vous sûr ?';
+            let confirmText = 'Oui';
+            let icon = 'warning';
+
+            if (this.classList.contains('btn-delete')) {
+                title = 'Confirmer la suppression';
+                text = 'Cette action est irréversible.';
+                confirmText = 'Oui, supprimer';
+            } else if (this.classList.contains('btn-valider')) {
+                title = 'Valider cette action ?';
+                text = 'Confirmer la validation ?';
+                confirmText = 'Oui, valider';
+                icon = 'question';
+            } else if (this.classList.contains('btn-annuler')) {
+                title = 'Annuler cette action ?';
+                text = 'Êtes-vous sûr d\'annuler ?';
+                confirmText = 'Oui, annuler';
+            } else if (this.classList.contains('btn-livrer')) {
+                title = 'Confirmer la livraison ?';
+                text = 'Le stock sera mis à jour.';
+                confirmText = 'Oui, livrer';
+                icon = 'info';
+            }
+
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: icon,
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: confirmText,
+                cancelButtonText: 'Annuler',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+</script>
 
 @stack('scripts')
 </body>
