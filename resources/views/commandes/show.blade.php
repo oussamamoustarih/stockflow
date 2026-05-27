@@ -5,7 +5,6 @@
 @section('content')
 <div class="row g-4">
 
-    {{-- Infos commande --}}
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
@@ -30,6 +29,28 @@
                         <td>{{ $commande->date_livraison_prevue ? \Carbon\Carbon::parse($commande->date_livraison_prevue)->format('d/m/Y') : '-' }}</td>
                     </tr>
                     <tr>
+                        <td class="text-muted">Date réelle</td>
+                        <td>
+                            @if($commande->date_livraison_reelle)
+                                @php
+                                    $livraisonReelle = \Carbon\Carbon::parse($commande->date_livraison_reelle);
+                                    $livraisonPrevue = $commande->date_livraison_prevue
+                                        ? \Carbon\Carbon::parse($commande->date_livraison_prevue)
+                                        : null;
+                                    $estEnRetard = $livraisonPrevue
+                                        && $livraisonReelle->toDateString() > $livraisonPrevue->toDateString();
+                                @endphp
+
+                                <span class="{{ $estEnRetard ? 'text-danger' : 'text-success' }}">
+                                    <i class="bi {{ $estEnRetard ? 'bi-exclamation-circle' : 'bi-check-circle' }}"></i>
+                                    {{ $livraisonReelle->format('d/m/Y H:i') }}
+                                </span>
+                            @else
+                                -
+                            @endif
+                        </td>
+                    </tr>
+                    <tr>
                         <td class="text-muted">Montant</td>
                         <td><strong>{{ number_format($commande->montant_total, 2) }} DH</strong></td>
                     </tr>
@@ -49,7 +70,6 @@
                     </tr>
                 </table>
 
-                {{-- Actions selon statut --}}
                 <div class="d-grid gap-2 mt-2">
                     @if($commande->statut == 'en_attente')
                         <form action="{{ route('commandes.valider', $commande) }}"
@@ -95,7 +115,6 @@
             </div>
         </div>
 
-        {{-- Infos BL --}}
         @if($commande->bonLivraison)
         <div class="card mt-3">
             <div class="card-header text-success">
@@ -109,7 +128,6 @@
         @endif
     </div>
 
-    {{-- Lignes commande --}}
     <div class="col-md-8">
         <div class="card">
             <div class="card-header">

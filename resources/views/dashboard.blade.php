@@ -52,6 +52,36 @@
     </div>
 </div>
 
+@if(auth()->user()->role === 'manager')
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-file-earmark-arrow-down me-2"></i>
+                    <strong>Exporter les rapports</strong>
+                </div>
+                <span class="badge bg-info">PDF / Excel</span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    Télécharger un rapport global du tableau de bord avec les principaux indicateurs, le Top 10 clients,
+                    les produits en alerte et les clients inactifs.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ route('dashboard.export.pdf') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-file-earmark-pdf"></i> Exporter en PDF
+                    </a>
+                    <a href="{{ route('dashboard.export.excel') }}" class="btn btn-outline-success">
+                        <i class="bi bi-file-earmark-excel"></i> Exporter en Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 {{-- Ligne 2 : CA KPIs --}}
 <div class="row g-3 mb-4">
     <div class="col-md-3">
@@ -103,7 +133,7 @@
     <div class="col-md-8">
         <div class="card h-100">
             <div class="card-header">
-                <i class="bi bi-graph-up"></i> Évolution du CA (30 derniers jours)
+                <i class="bi bi-graph-up"></i> Évolution du CA
             </div>
             <div class="card-body">
                 <canvas id="chartCA" height="100"></canvas>
@@ -283,34 +313,157 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const ctx = document.getElementById('chartCA').getContext('2d');
+
+const rawData = {!! json_encode($dataCA) !!}.map((value) => {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : 0;
+});
+const labels = {!! json_encode($labels) !!};
+
+// Ligne de tendance : moyenne glissante robuste sur 3 jours max
+const tendance = rawData.map((_, index) => {
+    const windowStart = Math.max(0, index - 2);
+    const windowValues = rawData
+        .slice(windowStart, index + 1)
+        .map((value) => {
+            const numericValue = Number(value);
+            return Number.isFinite(numericValue) ? numericValue : 0;
+        });
+
+    if (windowValues.length === 0) {
+        return 0;
+    }
+
+    const sum = windowValues.reduce((total, value) => total + value, 0);
+    const average = sum / windowValues.length;
+
+    return Number.isFinite(average) ? average : 0;
+});
+
 new Chart(ctx, {
-    type: 'line',
+    type: 'bar',
     data: {
-        labels: {!! json_encode($labels) !!},
-        datasets: [{
-            label: 'CA (DH)',
-            data: {!! json_encode($dataCA) !!},
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: '#3b82f6',
-            pointRadius: 3,
-        }]
+        labels: labels,
+        datasets: [
+            {
+                // Dataset 1 : Barres CA journalier
+                type: 'bar',
+                label: 'CA journalier (DH)',
+                data: rawData,
+                backgroundColor: function(context) {
+                    const value = context.parsed.y;
+                    if (value === 0) return 'rgba(203, 213, 225, 0.5)';
+                    return 'rgba(59, 130, 246, 0.75)';
+                },
+                borderColor: function(context) {
+                    const value = context.parsed.y;
+                    if (value === 0) return 'rgba(203, 213, 225, 0.8)';
+                    return '#3b82f6';
+                },
+                borderWidth: 1,
+                borderRadius: 6,
+                borderSkipped: false,
+                order: 2,
+            },
+            {
+                // Dataset 2 : Ligne de tendance
+                type: 'line',
+                label: 'Tendance',
+                data: tendance,
+                borderColor: '#f97316',
+                backgroundColor: 'transparent',
+                borderWidth: 2.5,
+                borderDash: [6, 3],
+                pointRadius: 3,
+                pointBackgroundColor: '#f97316',
+                pointHoverRadius: 5,
+                tension: 0.4,
+                spanGaps: true,
+                order: 1,
+            }
+        ]
     },
     options: {
         responsive: true,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
         plugins: {
-            legend: { display: false }
+            legend: {
+                display: true,
+                position: 'top',
+                align: 'end',
+                labels: {
+                    boxWidth: 12,
+                    boxHeight: 12,
+                    borderRadius: 3,
+                    useBorderRadius: true,
+                    padding: 15,
+                    font: {
+                        size: 12,
+                        family: "'Inter', sans-serif"
+                    },
+                    color: '#64748b'
+                }
+            },
+            tooltip: {
+                backgroundColor: '#1e293b',
+                titleColor: '#f8fafc',
+                bodyColor: '#cbd5e1',
+                borderColor: '#334155',
+                borderWidth: 1,
+                padding: 12,
+                cornerRadius: 8,
+                callbacks: {
+                    label: function(context) {
+                        const value = context.parsed.y;
+                        if (context.dataset.label === 'Tendance') {
+                            return ' Tendance : ' + value.toLocaleString('fr-FR', {
+                                minimumFractionDigits: 2
+                            }) + ' DH';
+                        }
+                        return ' CA : ' + value.toLocaleString('fr-FR', {
+                            minimumFractionDigits: 2
+                        }) + ' DH';
+                    }
+                }
+            }
         },
         scales: {
             y: {
                 beginAtZero: true,
                 ticks: {
                     callback: function(value) {
-                        return value + ' DH';
-                    }
+                        if (value >= 1000) {
+                            return (value / 1000).toLocaleString('fr-FR') + 'k DH';
+                        }
+                        return value.toLocaleString('fr-FR') + ' DH';
+                    },
+                    color: '#94a3b8',
+                    font: { size: 11 }
+                },
+                grid: {
+                    color: 'rgba(0,0,0,0.04)',
+                    drawBorder: false
+                },
+                border: {
+                    display: false
+                }
+            },
+            x: {
+                ticks: {
+                    color: '#94a3b8',
+                    font: { size: 11 },
+                    maxTicksLimit: 10,
+                    maxRotation: 0,
+                    minRotation: 0,
+                },
+                grid: {
+                    display: false
+                },
+                border: {
+                    display: false
                 }
             }
         }

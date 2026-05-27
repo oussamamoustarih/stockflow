@@ -7,8 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 class Commande extends Model
 {
     protected $fillable = [
-        'client_id', 'date_commande',
-        'date_livraison_prevue', 'montant_total', 'statut'
+        'client_id',
+        'date_commande',
+        'date_livraison_prevue',
+        'date_livraison_reelle',
+        'montant_total',
+        'statut',
+    ];
+
+    protected $casts = [
+        'date_commande' => 'date',
+        'date_livraison_prevue' => 'date',
+        'date_livraison_reelle' => 'datetime',
     ];
 
     public function client()

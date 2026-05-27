@@ -18,6 +18,7 @@
                     <th>Client</th>
                     <th>Date commande</th>
                     <th>Livraison prévue</th>
+                    <th>Date réelle</th>
                     <th>Montant</th>
                     <th>Statut</th>
                     <th>Actions</th>
@@ -27,9 +28,37 @@
                 @forelse($commandes as $commande)
                 <tr>
                     <td>{{ $commande->id }}</td>
-                    <td>{{ $commande->client->nom ?? '-' }} {{ $commande->client->prenom ?? '' }}</td>
-                    <td>{{ \Carbon\Carbon::parse($commande->date_commande)->format('d/m/Y') }}</td>
-                    <td>{{ $commande->date_livraison_prevue ? \Carbon\Carbon::parse($commande->date_livraison_prevue)->format('d/m/Y') : '-' }}</td>
+                    <td>
+                        {{ $commande->client->nom ?? '-' }}
+                        {{ $commande->client->prenom ?? '' }}
+                    </td>
+                    <td>
+                        {{ \Carbon\Carbon::parse($commande->date_commande)->format('d/m/Y') }}
+                    </td>
+                    <td>
+                        {{ $commande->date_livraison_prevue
+                            ? \Carbon\Carbon::parse($commande->date_livraison_prevue)->format('d/m/Y')
+                            : '-' }}
+                    </td>
+                    <td>
+                        @if($commande->date_livraison_reelle)
+                            @php
+                                $livraisonReelle = \Carbon\Carbon::parse($commande->date_livraison_reelle);
+                                $livraisonPrevue = $commande->date_livraison_prevue
+                                    ? \Carbon\Carbon::parse($commande->date_livraison_prevue)
+                                    : null;
+                                $estEnRetard = $livraisonPrevue
+                                    && $livraisonReelle->toDateString() > $livraisonPrevue->toDateString();
+                            @endphp
+
+                            <span class="{{ $estEnRetard ? 'text-danger' : 'text-success' }} small">
+                                <i class="bi {{ $estEnRetard ? 'bi-exclamation-circle' : 'bi-check-circle' }}"></i>
+                                {{ $livraisonReelle->format('d/m/Y') }}
+                            </span>
+                        @else
+                            <span class="text-muted">-</span>
+                        @endif
+                    </td>
                     <td>{{ number_format($commande->montant_total, 2) }} DH</td>
                     <td>
                         @if($commande->statut == 'en_attente')
@@ -51,7 +80,8 @@
                             <form action="{{ route('commandes.valider', $commande) }}"
                                   method="POST" class="d-inline confirm-form">
                                 @csrf
-                                <button type="button" class="btn btn-sm btn-primary btn-confirm btn-valider">
+                                <button type="button"
+                                        class="btn btn-sm btn-primary btn-confirm btn-valider">
                                     <i class="bi bi-check-lg"></i>
                                 </button>
                             </form>
@@ -59,7 +89,8 @@
                                   method="POST" class="d-inline confirm-form">
                                 @csrf
                                 @method('DELETE')
-                                <button type="button" class="btn btn-sm btn-danger btn-confirm btn-delete">
+                                <button type="button"
+                                        class="btn btn-sm btn-danger btn-confirm btn-delete">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
@@ -68,7 +99,8 @@
                             <form action="{{ route('commandes.livrer', $commande) }}"
                                   method="POST" class="d-inline confirm-form">
                                 @csrf
-                                <button type="button" class="btn btn-sm btn-success btn-confirm btn-livrer">
+                                <button type="button"
+                                        class="btn btn-sm btn-success btn-confirm btn-livrer">
                                     <i class="bi bi-truck"></i>
                                 </button>
                             </form>
@@ -83,7 +115,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-4">
+                    <td colspan="8" class="text-center text-muted py-4">
                         Aucune commande trouvée.
                     </td>
                 </tr>

@@ -42,9 +42,14 @@
                 </label>
                 <select name="role"
                         class="form-select @error('role') is-invalid @enderror">
-                    <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>
-                        Administrateur
-                    </option>
+                    
+                    {{-- On affiche Administrateur SEULEMENT si l'utilisateur actuel est déjà admin --}}
+                    @if($user->role === 'admin')
+                        <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>
+                            Administrateur
+                        </option>
+                    @endif
+
                     <option value="gestionnaire" {{ old('role', $user->role) == 'gestionnaire' ? 'selected' : '' }}>
                         Gestionnaire de stock
                     </option>

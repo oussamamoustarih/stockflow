@@ -44,22 +44,27 @@
                 <select name="role"
                         class="form-select @error('role') is-invalid @enderror">
                     <option value="">-- Choisir un rôle --</option>
-                    <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>
-                        Administrateur
-                    </option>
-                    <option value="gestionnaire" {{ old('role') == 'gestionnaire' ? 'selected' : '' }}>
+                    {{-- Option admin supprimée intentionnellement --}}
+                    <option value="gestionnaire"
+                            {{ old('role') == 'gestionnaire' ? 'selected' : '' }}>
                         Gestionnaire de stock
                     </option>
-                    <option value="vendeur" {{ old('role') == 'vendeur' ? 'selected' : '' }}>
+                    <option value="vendeur"
+                            {{ old('role') == 'vendeur' ? 'selected' : '' }}>
                         Vendeur / Caissier
                     </option>
-                    <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>
+                    <option value="manager"
+                            {{ old('role') == 'manager' ? 'selected' : '' }}>
                         Manager / Gérant
                     </option>
                 </select>
                 @error('role')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
+                <small class="text-muted">
+                    <i class="bi bi-info-circle"></i>
+                    Le rôle Administrateur ne peut pas être assigné ici.
+                </small>
             </div>
 
             <div class="mb-3">

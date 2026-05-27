@@ -11,7 +11,7 @@
         <form action="{{ route('commandes.store') }}" method="POST" id="formCommande">
             @csrf
 
-            <div class="row mb-3">
+            <div class="row g-3 mb-3">
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Client <span class="text-danger">*</span></label>
                     <select name="client_id"
@@ -44,7 +44,6 @@
                 </div>
             </div>
 
-            {{-- Lignes produits --}}
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span><i class="bi bi-list-ul"></i> Produits</span>
@@ -67,11 +66,14 @@
                             <tr id="ligne_0">
                                 <td>
                                     <select name="produits[0][produit_id]"
-                                            class="form-select form-select-sm">
+                                            class="form-select form-select-sm select-produit">
                                         <option value="">-- Choisir --</option>
-                                        @foreach($produits as $p)
-                                            <option value="{{ $p->id }}">
-                                                {{ $p->libelle }} ({{ $p->reference }})
+                                        @foreach($produits as $produit)
+                                            <option value="{{ $produit->id }}"
+                                                    data-prix="{{ $produit->prix_vente }}"
+                                                    data-stock="{{ $produit->quantite_stock }}"
+                                                    {{ $produit->quantite_stock <= 0 ? 'disabled' : '' }}>
+                                                {{ $produit->libelle }} ({{ $produit->reference }}) - Stock: {{ $produit->quantite_stock }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -102,9 +104,7 @@
                             <tr>
                                 <td colspan="3" class="text-end fw-bold">Total :</td>
                                 <td>
-                                    <span id="montantTotal" class="fw-bold text-primary">
-                                        0.00 DH
-                                    </span>
+                                    <span id="montantTotal" class="fw-bold text-primary">0.00 DH</span>
                                 </td>
                                 <td></td>
                             </tr>
@@ -117,7 +117,7 @@
                 <div class="alert alert-danger">{{ $message }}</div>
             @enderror
 
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-column flex-sm-row gap-2">
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-lg"></i> Enregistrer
                 </button>
@@ -133,55 +133,101 @@
 @push('scripts')
 <script>
 let ligneIndex = 1;
-const produits = {!! json_encode($produits) !!};
+const produitsData = @json($produits);
 
 function getProduitOptions() {
     let options = '<option value="">-- Choisir --</option>';
-    produits.forEach(p => {
-        options += `<option value="${p.id}">${p.libelle} (${p.reference})</option>`;
+
+    produitsData.forEach(produit => {
+        const disabled = Number(produit.quantite_stock) <= 0 ? 'disabled' : '';
+        options += `<option value="${produit.id}" data-prix="${produit.prix_vente}" data-stock="${produit.quantite_stock}" ${disabled}>${produit.libelle} (${produit.reference}) - Stock: ${produit.quantite_stock}</option>`;
     });
+
     return options;
+}
+
+function updateLigneProduit(event) {
+    const select = event.target;
+    const selectedOption = select.options[select.selectedIndex];
+    const prix = selectedOption.getAttribute('data-prix') || 0;
+    const stock = parseInt(selectedOption.getAttribute('data-stock') || 0, 10);
+    const row = select.closest('tr');
+    const inputPrix = row.querySelector('.prix');
+    const inputQuantite = row.querySelector('.quantite');
+
+    if (inputPrix) {
+        inputPrix.value = prix;
+    }
+
+    if (inputQuantite) {
+        if (stock > 0) {
+            inputQuantite.max = stock;
+            inputQuantite.value = Math.min(parseInt(inputQuantite.value || 1, 10), stock);
+            if (parseInt(inputQuantite.value || 0, 10) < 1) {
+                inputQuantite.value = 1;
+            }
+        } else {
+            inputQuantite.value = 1;
+            inputQuantite.removeAttribute('max');
+        }
+    }
+
+    calculerTotaux();
 }
 
 function calculerTotaux() {
     let total = 0;
+
     document.querySelectorAll('#lignesProduits tr').forEach(row => {
-        const qte = parseFloat(row.querySelector('.quantite')?.value) || 0;
+        const inputQuantite = row.querySelector('.quantite');
+        let qte = parseFloat(inputQuantite?.value) || 0;
+        const max = parseFloat(inputQuantite?.max);
+
+        if (!Number.isNaN(max) && max > 0 && qte > max) {
+            qte = max;
+            inputQuantite.value = max;
+        }
+
         const prix = parseFloat(row.querySelector('.prix')?.value) || 0;
         const sousTotal = qte * prix;
         const span = row.querySelector('.sous-total');
-        if (span) span.textContent = sousTotal.toFixed(2) + ' DH';
+
+        if (span) {
+            span.textContent = sousTotal.toFixed(2) + ' DH';
+        }
+
         total += sousTotal;
     });
+
     document.getElementById('montantTotal').textContent = total.toFixed(2) + ' DH';
 }
 
 document.getElementById('ajouterLigne').addEventListener('click', function () {
     const tbody = document.getElementById('lignesProduits');
     const tr = document.createElement('tr');
+
     tr.innerHTML = `
         <td>
-            <select name="produits[${ligneIndex}][produit_id]"
-                    class="form-select form-select-sm">
+            <select name="produits[${ligneIndex}][produit_id]" class="form-select form-select-sm select-produit">
                 ${getProduitOptions()}
             </select>
         </td>
         <td>
-            <input type="number" name="produits[${ligneIndex}][quantite]"
-                   class="form-control form-control-sm quantite" min="1" value="1">
+            <input type="number" name="produits[${ligneIndex}][quantite]" class="form-control form-control-sm quantite" min="1" value="1">
         </td>
         <td>
-            <input type="number" step="0.01"
-                   name="produits[${ligneIndex}][prix_unitaire]"
-                   class="form-control form-control-sm prix" min="0" value="0">
+            <input type="number" step="0.01" name="produits[${ligneIndex}][prix_unitaire]" class="form-control form-control-sm prix" min="0" value="0">
         </td>
-        <td><span class="sous-total fw-bold">0.00 DH</span></td>
+        <td>
+            <span class="sous-total fw-bold">0.00 DH</span>
+        </td>
         <td>
             <button type="button" class="btn btn-sm btn-danger supprimerLigne">
                 <i class="bi bi-trash"></i>
             </button>
         </td>
     `;
+
     tbody.appendChild(tr);
     ligneIndex++;
     attacherEvenements();
@@ -192,18 +238,40 @@ function attacherEvenements() {
         input.removeEventListener('input', calculerTotaux);
         input.addEventListener('input', calculerTotaux);
     });
+
+    document.querySelectorAll('.select-produit').forEach(select => {
+        select.removeEventListener('change', updateLigneProduit);
+        select.addEventListener('change', updateLigneProduit);
+    });
+
     document.querySelectorAll('.supprimerLigne').forEach(btn => {
         btn.removeEventListener('click', supprimerLigne);
         btn.addEventListener('click', supprimerLigne);
     });
+
+    updateDeleteButtons();
 }
 
 function supprimerLigne() {
     const rows = document.querySelectorAll('#lignesProduits tr');
+
     if (rows.length > 1) {
         this.closest('tr').remove();
         calculerTotaux();
+        updateDeleteButtons();
     }
+}
+
+function updateDeleteButtons() {
+    const rows = document.querySelectorAll('#lignesProduits tr');
+    const disableDelete = rows.length === 1;
+
+    document.querySelectorAll('.supprimerLigne').forEach(btn => {
+        btn.disabled = disableDelete;
+        btn.title = disableDelete
+            ? 'Ajoutez une autre ligne pour pouvoir en supprimer une.'
+            : 'Supprimer cette ligne';
+    });
 }
 
 attacherEvenements();

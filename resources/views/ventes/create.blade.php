@@ -11,7 +11,7 @@
         <form action="{{ route('ventes.store') }}" method="POST" id="formVente">
             @csrf
 
-            <div class="row mb-3">
+            <div class="row g-3 mb-3">
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Client</label>
                     <select name="client_id" class="form-select">
@@ -58,10 +58,10 @@
                     {{-- Produits de la catégorie --}}
                     <div id="listeProduits" class="row g-2">
                         @foreach($categories as $cat)
-                            <div class="produits-categorie d-none"
+                            <div class="produits-categorie d-none row g-2"
                                  data-categorie="{{ $cat->id }}">
                                 @foreach($cat->produits as $produit)
-                                    <div class="col-md-3 mb-2">
+                                    <div class="col-6 col-lg-3">
                                         <div class="card h-100 produit-card"
                                              style="cursor:pointer;"
                                              data-id="{{ $produit->id }}"
@@ -137,7 +137,7 @@
 
             <div id="champsHidden"></div>
 
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-column flex-sm-row gap-2">
                 <button type="submit" class="btn btn-success btn-lg" id="btnValider">
                     <i class="bi bi-check-lg"></i> Valider la vente
                 </button>
@@ -228,7 +228,7 @@ function afficherPanier() {
                 <td>${item.prix.toFixed(2)} DH</td>
                 <td>
                     <input type="number" class="form-control form-control-sm"
-                           style="width:80px;"
+                           style="width:80px; min-width:80px;"
                            value="${item.quantite}" min="1" max="${item.stock}"
                            onchange="modifierQuantite(${index}, this.value)">
                 </td>

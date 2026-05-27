@@ -12,9 +12,9 @@ class VentesExport implements FromCollection, WithHeadings, WithMapping
     public function collection()
     {
         return Vente::with('client', 'vendeur')
-            ->where('statut', 'validee')
-            ->orderBy('date_vente', 'desc')
-            ->get();
+    ->where('statut', 'validee')
+    ->orderBy('id', 'asc')
+    ->get();
     }
 
     public function headings(): array

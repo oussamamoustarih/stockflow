@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Exports\VentesExport;
 use Maatwebsite\Excel\Facades\Excel;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Vente;
@@ -14,13 +13,15 @@ use App\Models\Client;
 use App\Models\Categorie;
 use App\Models\MouvementStock;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class VenteController extends Controller
 {
+    // Affiche la liste des ventes (C'est cette méthode qui manquait !)
     public function index()
     {
         $ventes = Vente::with('client', 'vendeur')
-            ->orderBy('created_at')
+            ->orderBy('created_at', 'desc')
             ->paginate(10);
         return view('ventes.index', compact('ventes'));
     }
@@ -40,33 +41,23 @@ class VenteController extends Controller
             'produits.*.produit_id' => 'required|exists:produits,id',
             'produits.*.quantite'   => 'required|integer|min:1',
             'produits.*.prix'       => 'required|numeric|min:0',
-        ], [
-            'mode_paiement.required' => 'Le mode de paiement est obligatoire.',
-            'produits.required'      => 'Ajoutez au moins un produit.',
         ]);
 
-        // Vérifier stock AVANT validation
         foreach ($request->produits as $p) {
             $produit = Produit::find($p['produit_id']);
             if (!$produit->verifierStockDisponible($p['quantite'])) {
-                return back()->with('error',
-                    'Stock insuffisant pour le produit : ' . $produit->libelle .
-                    ' (stock disponible : ' . $produit->quantite_stock . ')'
-                );
+                return back()->with('error', 'Stock insuffisant pour : ' . $produit->libelle);
             }
         }
 
         $vente = null;
 
         DB::transaction(function () use ($request, &$vente) {
-
-            // Calculer montant total
             $montantTotal = 0;
             foreach ($request->produits as $p) {
                 $montantTotal += $p['quantite'] * $p['prix'];
             }
 
-            // Créer la vente
             $vente = Vente::create([
                 'client_id'     => $request->client_id ?: null,
                 'vendeur_id'    => auth()->id(),
@@ -76,9 +67,7 @@ class VenteController extends Controller
                 'statut'        => 'validee',
             ]);
 
-            // Pour chaque produit du panier
             foreach ($request->produits as $p) {
-                // 1. Créer ligne vente
                 LigneVente::create([
                     'vente_id'      => $vente->id,
                     'produit_id'    => $p['produit_id'],
@@ -87,13 +76,10 @@ class VenteController extends Controller
                     'sous_total'    => $p['quantite'] * $p['prix'],
                 ]);
 
-                // 2. Diminuer stock
-                /** @var Produit $produit */
                 $produit = Produit::find($p['produit_id']);
                 $stockAvant = $produit->quantite_stock;
                 $produit->decrement('quantite_stock', $p['quantite']);
 
-                // 3. Mouvement stock automatique (R1)
                 MouvementStock::create([
                     'produit_id'          => $p['produit_id'],
                     'type_mouvement'      => 'sortie',
@@ -107,8 +93,7 @@ class VenteController extends Controller
             }
         });
 
-        return redirect()->route('ventes.show', $vente->id)
-            ->with('success', 'Vente enregistrée avec succès.');
+        return redirect()->route('ventes.show', $vente->id)->with('success', 'Vente enregistrée.');
     }
 
     public function show(Vente $vente)
@@ -120,25 +105,56 @@ class VenteController extends Controller
     public function genererFacture(Vente $vente)
     {
         $vente->load('client', 'vendeur', 'lignes.produit');
+        date_default_timezone_set('Africa/Casablanca');
 
-        // Numéro facture : FAC-YYYYMMDD-XXXX
+        $totalHT = $vente->montant_total;
+        $tva = $totalHT * 0.20;
+        $totalTTC = $totalHT + $tva;
+        $totalEnLettres = $this->chiffreEnLettres($totalTTC);
+
         $numeroFacture = 'FAC-' . $vente->created_at->format('Ymd') . '-' . str_pad($vente->id, 4, '0', STR_PAD_LEFT);
 
-        $pdf = Pdf::loadView('ventes.facture', compact('vente', 'numeroFacture'));
+        $pdf = Pdf::loadView('ventes.facture', [
+            'vente' => $vente,
+            'numeroFacture' => $numeroFacture,
+            'totalTTC' => $totalTTC,
+            'totalEnLettres' => $totalEnLettres
+        ]);
 
         return $pdf->download('facture-' . $numeroFacture . '.pdf');
     }
 
+    private function chiffreEnLettres($montant)
+{
+    // On force l'utilisation d'un format simple si l'extension Intl est absente
+    if (!class_exists('NumberFormatter')) {
+        return number_format($montant, 2, ',', ' ') . " Dirhams";
+    }
+
+    $f = new \NumberFormatter("fr", \NumberFormatter::SPELLOUT);
+    
+    // Séparation partie entière et décimale
+    $entier = floor($montant);
+    $decimal = round(($montant - $entier) * 100);
+
+    $resultat = $f->format($entier) . " Dirhams";
+    
+    if ($decimal > 0) {
+        $resultat .= " et " . $f->format($decimal) . " Centimes";
+    }
+
+    return ucfirst($resultat);
+}
+
     public function destroy(Vente $vente)
     {
         if ($vente->statut === 'validee') {
-            return redirect()->route('ventes.index')
-                ->with('error', 'Impossible de supprimer une vente validée.');
+            return redirect()->route('ventes.index')->with('error', 'Impossible de supprimer.');
         }
         $vente->delete();
-        return redirect()->route('ventes.index')
-            ->with('success', 'Vente supprimée avec succès.');
+        return redirect()->route('ventes.index')->with('success', 'Supprimée.');
     }
+
     public function exportExcel()
     {
         return Excel::download(new VentesExport, 'ventes-' . now()->format('Ymd') . '.xlsx');

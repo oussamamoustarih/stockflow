@@ -9,7 +9,7 @@ class CategorieController extends Controller
 {
     public function index()
     {
-        $categories = Categorie::orderBy('nom')->paginate(10);
+        $categories = Categorie::orderBy('id', 'asc')->paginate(10);
         return view('categories.index', compact('categories'));
     }
 

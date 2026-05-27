@@ -11,9 +11,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-    $middleware->alias([
-        'role' => \App\Http\Middleware\CheckRole::class,
-    ]);
+        // 1. Gestion des redirections automatiques
+        $middleware->redirectTo(
+            guests: '/login',      // Redirige vers login si non connecté
+            users: '/dashboard'    // Redirige vers dashboard si DÉJÀ connecté (résout ton problème)
+        );
+
+        // 2. Tes alias de middlewares existants
+        $middleware->alias([
+            'role' => \App\Http\Middleware\CheckRole::class,
+            'prevent.back' => \App\Http\Middleware\PreventBackHistory::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

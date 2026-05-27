@@ -45,10 +45,9 @@
                         </a>
                         @if($appro->statut == 'en_cours')
                             <form action="{{ route('approvisionnements.valider', $appro) }}"
-                                  method="POST" class="d-inline"
-                                  onsubmit="return confirm('Valider cet approvisionnement ? Le stock sera mis à jour.')">
+                                  method="POST" class="d-inline confirm-form">
                                 @csrf
-                                <button class="btn btn-sm btn-success">
+                                <button type="button" class="btn btn-sm btn-success btn-confirm btn-valider">
                                     <i class="bi bi-check-lg"></i> Valider
                                 </button>
                             </form>

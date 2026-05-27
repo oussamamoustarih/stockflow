@@ -12,7 +12,7 @@ class ProduitsExport implements FromCollection, WithHeadings, WithMapping
     public function collection()
     {
         return Produit::with('categorie', 'marque')
-            ->orderBy('libelle')
+            ->orderBy('id', 'asc')
             ->get();
     }
 

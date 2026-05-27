@@ -14,6 +14,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 20px;
     }
     .login-card {
         background: #fff;
@@ -92,6 +93,27 @@
         background: linear-gradient(to right, transparent, #e2e8f0, transparent);
         margin: 25px 0;
     }
+    @media (max-width: 575.98px) {
+        body {
+            align-items: stretch;
+            padding: 14px;
+        }
+        .login-card {
+            padding: 28px 20px;
+            border-radius: 16px;
+            max-width: none;
+            margin: auto 0;
+        }
+        .logo {
+            margin-bottom: 24px;
+        }
+        .logo i {
+            font-size: 2.8rem;
+        }
+        .logo h1 {
+            font-size: 1.65rem;
+        }
+    }
 </style>
 </head>
 <body>
@@ -115,7 +137,7 @@
             <input type="email" name="email"
                    class="form-control @error('email') is-invalid @enderror"
                    value="{{ old('email') }}"
-                   placeholder="votre@email.com"
+                   placeholder="exemple@stock.ma"
                    required autofocus>
             @error('email')
                 <div class="invalid-feedback">{{ $message }}</div>
@@ -155,5 +177,22 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+(function() {
+    // Vider complètement l'historique
+    window.history.replaceState(null, null, '/login');
+
+    // Bloquer le retour
+    window.addEventListener('popstate', function() {
+        window.location.replace('/login');
+    });
+
+    // Pousser 20 fois pour écraser tout l'historique précédent
+    for (let i = 0; i < 20; i++) {
+        window.history.pushState(null, null, '/login');
+    }
+})();
+</script>
 </body>
 </html>

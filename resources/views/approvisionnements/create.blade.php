@@ -11,7 +11,7 @@
         <form action="{{ route('approvisionnements.store') }}" method="POST" id="formAppro">
             @csrf
 
-            <div class="row mb-3">
+            <div class="row g-3 mb-3">
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Fournisseur <span class="text-danger">*</span></label>
                     <select name="fournisseur_id" class="form-select @error('fournisseur_id') is-invalid @enderror">
@@ -66,10 +66,12 @@
                         <tbody id="lignesProduits">
                             <tr id="ligne_0">
                                 <td>
-                                    <select name="produits[0][produit_id]" class="form-select form-select-sm">
+                                    <select name="produits[0][produit_id]" class="form-select form-select-sm select-produit">
                                         <option value="">-- Choisir --</option>
                                         @foreach($produits as $p)
-                                            <option value="{{ $p->id }}">{{ $p->libelle }} ({{ $p->reference }})</option>
+                                            <option value="{{ $p->id }}" data-prix="{{ $p->prix_achat }}">
+                                                {{ $p->libelle }} ({{ $p->reference }})
+                                            </option>
                                         @endforeach
                                     </select>
                                 </td>
@@ -108,7 +110,7 @@
                 <div class="alert alert-danger">{{ $message }}</div>
             @enderror
 
-            <div class="d-flex gap-2">
+            <div class="d-flex flex-column flex-sm-row gap-2">
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-check-lg"></i> Enregistrer
                 </button>
@@ -130,9 +132,22 @@ const produits = @json($produits);
 function getProduitOptions() {
     let options = '<option value="">-- Choisir --</option>';
     produits.forEach(p => {
-        options += `<option value="${p.id}">${p.libelle} (${p.reference})</option>`;
+        options += `<option value="${p.id}" data-prix="${p.prix_achat}">${p.libelle} (${p.reference})</option>`;
     });
     return options;
+}
+
+function updatePrixLigne(event) {
+    const select = event.target;
+    const selectedOption = select.options[select.selectedIndex];
+    const prix = selectedOption.getAttribute('data-prix') || 0;
+    const row = select.closest('tr');
+    const inputPrix = row.querySelector('.prix');
+
+    if (inputPrix) {
+        inputPrix.value = prix;
+        calculerTotaux();
+    }
 }
 
 function calculerTotaux() {
@@ -154,7 +169,7 @@ document.getElementById('ajouterLigne').addEventListener('click', function () {
     tr.id = 'ligne_' + ligneIndex;
     tr.innerHTML = `
         <td>
-            <select name="produits[${ligneIndex}][produit_id]" class="form-select form-select-sm">
+            <select name="produits[${ligneIndex}][produit_id]" class="form-select form-select-sm select-produit">
                 ${getProduitOptions()}
             </select>
         </td>
@@ -182,6 +197,10 @@ function attacherEvenements() {
     document.querySelectorAll('.quantite, .prix').forEach(input => {
         input.removeEventListener('input', calculerTotaux);
         input.addEventListener('input', calculerTotaux);
+    });
+    document.querySelectorAll('.select-produit').forEach(select => {
+        select.removeEventListener('change', updatePrixLigne);
+        select.addEventListener('change', updatePrixLigne);
     });
     document.querySelectorAll('.supprimerLigne').forEach(btn => {
         btn.removeEventListener('click', supprimerLigne);

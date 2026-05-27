@@ -6,7 +6,7 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
     <span><i class="bi bi-cash-register"></i> Historique des ventes</span>
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
         <a href="{{ route('ventes.export.excel') }}" class="btn btn-success btn-sm">
             <i class="bi bi-file-earmark-excel"></i> Export Excel
         </a>

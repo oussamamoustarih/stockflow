@@ -12,7 +12,7 @@ class MouvementsExport implements FromCollection, WithHeadings, WithMapping
     public function collection()
     {
         return MouvementStock::with('produit', 'utilisateur')
-            ->orderBy('date_mouvement', 'desc')
+            ->orderBy('date_mouvement', 'asc')
             ->get();
     }
 

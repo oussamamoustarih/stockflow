@@ -18,7 +18,7 @@
                         <td><strong>#{{ $vente->id }}</strong></td>
                     </tr>
                     <tr>
-                        <td class="text-muted">Date</td>
+                        <td class="text-muted">Date de vente</td>
                         <td>{{ \Carbon\Carbon::parse($vente->date_vente)->format('d/m/Y H:i') }}</td>
                     </tr>
                     <tr>

@@ -38,7 +38,7 @@
                         @if($user->role === 'admin')
                             <span class="badge bg-danger">Administrateur</span>
                         @elseif($user->role === 'gestionnaire')
-                            <span class="badge bg-primary">Gestionnaire</span>
+                            <span class="badge bg-primary">Gestionnaire de Stock</span>
                         @elseif($user->role === 'vendeur')
                             <span class="badge bg-success">Vendeur</span>
                         @else
@@ -47,16 +47,22 @@
                     </td>
                     <td>{{ \Carbon\Carbon::parse($user->created_at)->format('d/m/Y') }}</td>
                     <td>
-                        <a href="{{ route('users.edit', $user) }}"
-                           class="btn btn-sm btn-warning">
-                            <i class="bi bi-pencil"></i>
-                        </a>
+                        {{-- Bouton édition : masqué pour l'admin connecté --}}
+                        @if($user->id !== auth()->id())
+                            <a href="{{ route('users.edit', $user) }}"
+                               class="btn btn-sm btn-warning">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        @endif
+
+                        {{-- Bouton suppression : masqué pour l'admin connecté --}}
                         @if($user->id !== auth()->id())
                         <form action="{{ route('users.destroy', $user) }}"
                               method="POST" class="d-inline confirm-form">
                             @csrf
                             @method('DELETE')
-                            <button type="button" class="btn btn-sm btn-danger btn-confirm btn-delete">
+                            <button type="button"
+                                    class="btn btn-sm btn-danger btn-confirm btn-delete">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>

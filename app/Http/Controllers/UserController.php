@@ -25,7 +25,7 @@ class UserController extends Controller
             'name'     => 'required|max:100',
             'email'    => 'required|email|unique:users,email',
             'password' => 'required|min:8|confirmed',
-            'role'     => 'required|in:admin,gestionnaire,vendeur,manager',
+            'role' => 'required|in:gestionnaire,vendeur,manager',
         ], [
             'name.required'      => 'Le nom est obligatoire.',
             'email.required'     => 'L\'email est obligatoire.',
@@ -54,10 +54,18 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        // Logique de sécurité : Définit les rôles autorisés pour cet utilisateur précis
+        $allowedRoles = ['gestionnaire', 'vendeur', 'manager'];
+        
+        // Si l'utilisateur est déjà admin, il garde le droit d'être admin
+        if ($user->role === 'admin') {
+            $allowedRoles[] = 'admin';
+        }
+
         $request->validate([
             'name'  => 'required|max:100',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'role'  => 'required|in:admin,gestionnaire,vendeur,manager',
+            'role'  => 'required|in:' . implode(',', $allowedRoles),
             'password' => 'nullable|min:8|confirmed',
         ], [
             'name.required'      => 'Le nom est obligatoire.',
@@ -66,6 +74,7 @@ class UserController extends Controller
             'password.min'       => 'Le mot de passe doit contenir au moins 8 caractères.',
             'password.confirmed' => 'Les mots de passe ne correspondent pas.',
             'role.required'      => 'Le rôle est obligatoire.',
+            'role.in'            => 'Vous n\'avez pas l\'autorisation d\'attribuer ce rôle.',
         ]);
 
         $data = [
@@ -74,7 +83,6 @@ class UserController extends Controller
             'role'  => $request->role,
         ];
 
-        // Changer mot de passe seulement si renseigné
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
@@ -87,7 +95,6 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        // Empêcher suppression de son propre compte
         if ($user->id === auth()->id()) {
             return redirect()->route('users.index')
                 ->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
