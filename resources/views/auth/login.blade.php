@@ -137,7 +137,7 @@
             <input type="email" name="email"
                    class="form-control @error('email') is-invalid @enderror"
                    value="{{ old('email') }}"
-                   placeholder="exemple@stock.ma"
+                   placeholder="exemple@stockflow.com"
                    required autofocus>
             @error('email')
                 <div class="invalid-feedback">{{ $message }}</div>
