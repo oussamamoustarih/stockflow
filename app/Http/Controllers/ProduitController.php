@@ -6,7 +6,6 @@ use App\Exports\ProduitsExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use App\Models\Produit;
 use App\Models\Categorie;
@@ -83,8 +82,8 @@ class ProduitController extends Controller
         ]);
 
         // Upload image
-        if ($request->hasFile('image')) {
-            $uploadedFile = Cloudinary::upload($request->file('image')->getRealPath());
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $uploadedFile = Cloudinary::upload($request->file('image')->getPathname());
             $data['image_url'] = $uploadedFile->getSecurePath();
         }
 
@@ -145,8 +144,8 @@ class ProduitController extends Controller
         ]);
 
         // Upload nouvelle image
-        if ($request->hasFile('image')) {
-            $uploadedFile = Cloudinary::upload($request->file('image')->getRealPath());
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $uploadedFile = Cloudinary::upload($request->file('image')->getPathname());
             $data['image_url'] = $uploadedFile->getSecurePath();
         }
 
