@@ -7,6 +7,7 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use App\Models\Produit;
 use App\Models\Categorie;
 use App\Models\Marque;
@@ -20,9 +21,9 @@ class ProduitController extends Controller
         // Recherche
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('libelle', 'like', "%$search%")
-                  ->orWhere('reference', 'like', "%$search%");
+                    ->orWhere('reference', 'like', "%$search%");
             });
         }
 
@@ -71,14 +72,20 @@ class ProduitController extends Controller
         ]);
 
         $data = $request->only([
-            'reference', 'libelle', 'categorie_id', 'marque_id',
-            'prix_achat', 'prix_vente', 'quantite_stock', 'seuil_alerte'
+            'reference',
+            'libelle',
+            'categorie_id',
+            'marque_id',
+            'prix_achat',
+            'prix_vente',
+            'quantite_stock',
+            'seuil_alerte'
         ]);
 
         // Upload image
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('produits', 'public');
-            $data['image_url'] = $path;
+            $uploadedFile = Cloudinary::upload($request->file('image')->getRealPath());
+            $data['image_url'] = $uploadedFile->getSecurePath();
         }
 
         Produit::create($data);
@@ -127,18 +134,20 @@ class ProduitController extends Controller
         ]);
 
         $data = $request->only([
-            'reference', 'libelle', 'categorie_id', 'marque_id',
-            'prix_achat', 'prix_vente', 'quantite_stock', 'seuil_alerte'
+            'reference',
+            'libelle',
+            'categorie_id',
+            'marque_id',
+            'prix_achat',
+            'prix_vente',
+            'quantite_stock',
+            'seuil_alerte'
         ]);
 
         // Upload nouvelle image
         if ($request->hasFile('image')) {
-            // Supprimer ancienne image
-            if ($produit->image_url) {
-                Storage::disk('public')->delete($produit->image_url);
-            }
-            $path = $request->file('image')->store('produits', 'public');
-            $data['image_url'] = $path;
+            $uploadedFile = Cloudinary::upload($request->file('image')->getRealPath());
+            $data['image_url'] = $uploadedFile->getSecurePath();
         }
 
         $produit->update($data);
@@ -150,9 +159,7 @@ class ProduitController extends Controller
     public function destroy(Produit $produit)
     {
         // Supprimer image si existe
-        if ($produit->image_url) {
-            Storage::disk('public')->delete($produit->image_url);
-        }
+        // Image gérée par Cloudinary - suppression optionnelle
 
         $produit->delete();
 
@@ -164,5 +171,4 @@ class ProduitController extends Controller
     {
         return Excel::download(new ProduitsExport, 'produits-' . now()->format('Ymd') . '.xlsx');
     }
-
 }
