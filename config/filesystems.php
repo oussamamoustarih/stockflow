@@ -41,23 +41,18 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/') . '/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
         ],
 
         'cloudinary' => [
-            'driver' => 'cloudinary',
-            'url' => env('CLOUDINARY_URL'),
-            'cloud' => [
-                'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
-                'api_key' => env('CLOUDINARY_KEY'),
-                'api_secret' => env('CLOUDINARY_SECRET'),
-            ],
-            'secure' => true,
-            'throw' => false,
-            'report' => false,
+            'driver'     => 'cloudinary',
+            'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+            'key'        => env('CLOUDINARY_KEY'),
+            'secret'     => env('CLOUDINARY_SECRET'),
+            'secure'     => true,
         ],
 
         's3' => [
